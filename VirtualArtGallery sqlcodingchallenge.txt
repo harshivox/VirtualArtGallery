@@ -1,0 +1,286 @@
+mysql> -- create the database
+mysql> create database if not exists art_gallery;
+Query OK, 1 row affected, 1 warning (0.00 sec)
+mysql> use art_gallery;
+Database changed
+mysql> -- create the artists table
+mysql> create table if not exists artists (
+    ->     artistid int primary key,
+    ->     name varchar(255) not null,
+    ->     biography text,
+    ->     nationality varchar(100)
+    -> );
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+mysql> -- create the categories table
+mysql> create table if not exists categories (
+    ->     categoryid int primary key,
+    ->     name varchar(100) not null
+    -> );
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+mysql> -- create the artworks table
+mysql> create table if not exists artworks (
+    ->     artworkid int primary key,
+    ->     title varchar(255) not null,
+    ->     artistid int,
+    ->     categoryid int,
+    ->     year int,
+    ->     description text,
+    ->     imageurl varchar(255),
+    ->     foreign key (artistid) references artists(artistid),
+    ->     foreign key (categoryid) references categories(categoryid)
+    -> );
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+mysql>
+mysql> -- create the exhibitions table
+mysql> create table if not exists exhibitions (
+    ->     exhibitionid int primary key,
+    ->     title varchar(255) not null,
+    ->     startdate date,
+    ->     enddate date,
+    ->     description text
+    -> );
+Query OK, 0 rows affected, 1 warning (0.00 sec)mysql> -- Insert sample data into the Artists table
+mysql> INSERT INTO Artists (ArtistID, Name, Biography, Nationality) VALUES
+    ->     (1, 'Pablo Picasso', 'Renowned Spanish painter and sculptor.', 'Spanish'),
+    ->     (2, 'Vincent van Gogh', 'Dutch post-impressionist painter.', 'Dutch'),
+    ->     (3, 'Leonardo da Vinci', 'Italian polymath of the Renaissance.', 'Italian');
+Query OK, 3 rows affected (0.04 sec)
+Records: 3  Duplicates: 0  Warnings: 0
+mysql> -- Insert sample data into the Categories table
+mysql> INSERT INTO Categories (CategoryID, Name) VALUES
+    ->     (1, 'Painting'),
+    ->     (2, 'Sculpture'),
+    ->     (3, 'Photography');
+Query OK, 3 rows affected (0.01 sec)
+Records: 3  Duplicates: 0  Warnings: 0
+
+mysql>
+mysql> -- Insert sample data into the Artworks table
+mysql> INSERT INTO Artworks (ArtworkID, Title, ArtistID, CategoryID, Year, Description, ImageURL) VALUES
+    ->     (1, 'Starry Night', 2, 1, 1889, 'A famous painting by Vincent van Gogh.', 'starry_night.jpg'),
+    ->     (2, 'Mona Lisa', 3, 1, 1503, 'The iconic portrait by Leonardo da Vinci.', 'mona_lisa.jpg'),     (3, 'Guernica', 1, 1, 1937, 'Pablo Picasso\'s powerful anti-war mural.', 'guernica.jpg');
+Query OK, 3 rows affected (0.02 sec)
+Records: 3  Duplicates: 0  Warnings: 0
+mysql> -- Insert sample data into the Exhibitions table
+mysql> INSERT INTO Exhibitions (ExhibitionID, Title, StartDate, EndDate, Description) VALUES
+    ->     (1, 'Modern Art Masterpieces', '2023-01-01', '2023-03-01', 'A collection of modern art masterpieces.'),     (2, 'Renaissance Art', '2023-04-01', '2023-06-01', 'A showcase of Renaissance art treasures.');
+Query OK, 2 rows affected (0.01 sec)
+Records: 2  Duplicates: 0  Warnings: 0
+
+mysql> -- Insert artworks into exhibitions
+mysql> INSERT INTO ExhibitionArtworks (ExhibitionID, ArtworkID) VALUES
+    ->     (1, 1),
+    ->     (1, 2),
+    ->     (1, 3),
+    ->     (2, 2);
+Query OK, 4 rows affected (0.01 sec)
+Records: 4  Duplicates: 0  Warnings: 0
+
+
+                                SQL Queries
+1) Retrieve the names of all artists along with the number of artworks they have in the gallery, and list them in descending order of the number of artworks. 
+Ans: mysql> select artists.name, count(artworks.artworkid) as no_of_artworks
+    -> from artists left join artworks on artists.artistid = artworks.artistid
+    -> group by artists.name order by no_of_artworks desc;
++-------------------+----------------+
+| name              | no_of_artworks |
++-------------------+----------------+
+| Pablo Picasso     |              1 |
+| Vincent van Gogh  |              1 |
+| Leonardo da Vinci |              1 |
++-------------------+----------------+
+3 rows in set (0.02 sec)
+
+2)List the titles of artworks created by artists from 'Spanish' and 'Dutch' nationalities, and order them by the year in ascending order. 
+Ans: mysql> select artworks.title, artworks.year from artworks
+    -> inner join artists on artworks.artistid = artists.artistid
+    -> where artists.nationality in ('Spanish', 'Dutch')
+    -> order by artworks.year asc;
++--------------+------+
+| title        | year |
++--------------+------+
+| Starry Night | 1889 |
+| Guernica     | 1937 |
++--------------+------+
+2 rows in set (0.00 sec)
+3)Find the names of all artists who have artworks in the 'Painting' category, and the number of artworks they have in this category. 
+Ans: mysql> select artists.name, count(artworks.artworkid) asnumber_of_paintings
+    -> from artists inner join artworks on artists.artistid = artworks.artistid
+    -> inner join categories on artworks.categoryid = categories.categoryid
+    -> where categories.name = 'Painting'
+    -> group by artists.name;
++-------------------+-----------------------+
+| name              | asnumber_of_paintings |
++-------------------+-----------------------+
+| Vincent van Gogh  |                     1 |
+| Leonardo da Vinci |                     1 |
+| Pablo Picasso     |                     1 |
++-------------------+-----------------------+
+3 rows in set (0.00 sec)
+4)List the names of artworks from the 'Modern Art Masterpieces' exhibition, along with their artists and categories. 
+Ans:  select artworks.title as artwork_title,artists.name as artist_name,categories.name as category_name
+    -> from artworks inner join artists on artworks.artistid = artists.artistid
+    -> inner join categories on artworks.categoryid = categories.categoryid
+    -> inner join exhibitionartworks on artworks.artworkid =exhibitionartworks.artworkid
+    -> inner join exhibitions on exhibitionartworks.exhibitionid = exhibitions.exhibitionid
+    -> where exhibitions.title = 'Modern Art Masterpieces';
++---------------+-------------------+---------------+
+| artwork_title | artist_name       | category_name |
++---------------+-------------------+---------------+
+| Starry Night  | Vincent van Gogh  | Painting      |
+| Mona Lisa     | Leonardo da Vinci | Painting      |
+| Guernica      | Pablo Picasso     | Painting      |
++---------------+-------------------+---------------+
+3 rows in set (0.00 sec)
+
+5)Find the artists who have more than two artworks in the gallery. 
+Ans:mysql> select artists.name from artists
+    -> inner join artworks on artists.artistid = artworks.artistid
+    -> group by artists.name having count(artworks.artworkid) > 2;
+Empty set (0.00 sec)
+
+6)Find the titles of artworks that were exhibited in both 'Modern Art Masterpieces' and 'Renaissance Art' exhibitions 
+Ans:mysql> select artworks.title from artworks
+    -> inner join exhibitionartworks on artworks.artworkid = exhibitionartworks.artworkid
+    -> inner join exhibitions on exhibitionartworks.exhibitionid = exhibitions.exhibitionid
+    -> where exhibitions.title in ('Modern Art Masterpieces', 'Renaissance Art')
+    -> group by artworks.title
+    -> having count(distinct exhibitions.title) = 2;
++-----------+
+| title     |
++-----------+
+| Mona Lisa |
++-----------+
+1 row in set (0.00 sec)
+7)Find the total number of artworks in each category 
+Ans:mysql> select categories.name as category_name,count(artworks.artworkid) as total_artworks from categories
+    -> left join artworks on categories.categoryid = artworks.categoryid
+    -> group by categories.name;
++---------------+----------------+
+| category_name | total_artworks |
++---------------+----------------+
+| Painting      |              3 |
+| Sculpture     |              0 |
+| Photography   |              0 |
++---------------+----------------+
+3 rows in set (0.00 sec)
+
+8)List artists who have more than 3 artworks in the gallery
+Ans: mysql> select artists.name from artists
+    -> inner join artworks on artists.artistid = artworks.artistid
+    -> group by artists.name having count(artworks.artworkid) > 3;
+Empty set (0.00 sec)
+9)Find the artworks created by artists from a specific nationality (e.g., Spanish). 
+Ans:mysql> select artworks.title,artists.name as artist_name,artists.nationality
+    -> from artworks inner join artists on artworks.artistid = artists.artistid
+    -> where artists.nationality = 'Spanish';
++----------+---------------+-------------+
+| title    | artist_name   | nationality |
++----------+---------------+-------------+
+| Guernica | Pablo Picasso | Spanish     |
++----------+---------------+-------------+
+1 row in set (0.00 sec)
+10)List exhibitions that feature artwork by both Vincent van Gogh and Leonardo da Vinci.
+Ans:select exhibitions.title from exhibitions
+    -> inner join exhibitionartworks on exhibitions.exhibitionid = exhibitionartworks.exhibitionid
+    -> inner join artworks on exhibitionartworks.artworkid = artworks.artworkid inner join artists on artworks.artistid = artists.artistid
+    -> where artists.name in ('Vincent van Gogh', 'Leonardo da Vinci')
+    -> group by exhibitions.title having count(distinct artists.name) = 2;
++-------------------------+
+| title                   |
++-------------------------+
+| Modern Art Masterpieces |
++-------------------------+
+1 row in set (0.00 sec)
+11)Find all the artworks that have not been included in any exhibition. 
+Ans: mysql> select artworks.title,artists.name as artist_name from artworks
+    -> left join
+    ->     exhibitionartworks on artworks.artworkid = exhibitionartworks.artworkid
+    -> left join
+    ->     artists on artworks.artistid = artists.artistid
+    -> where
+    ->     exhibitionartworks.exhibitionid is null;
+Empty set (0.00 sec)
+12)List artists who have created artworks in all available categories. 
+Ans:mysql> select artists.name as artist_name from artists inner join artworks on artists.artistid = artworks.artistid group by
+    -> artists.artistid, artists.name having
+    -> count(distinct artworks.categoryid) = (select count(*) from categories);
+Empty set (0.06 sec)
+13)List the total number of artworks in each category
+Ans:
+mysql> select categories.name as category_name,count(artworks.artworkid) as total_artworks from categories left join artworks on categories.categoryid = artworks.categoryid group by categories.name;
++---------------+----------------+
+| category_name | total_artworks |
++---------------+----------------+
+| Painting      |              3 |
+| Sculpture     |              0 |
+| Photography   |              0 |
++---------------+----------------+
+3 rows in set (0.00 sec)
+14)Find the artists who have more than 2 artworks in the gallery
+Ans: mysql> select
+    -> artists.name as artist_name from artists inner join
+    -> artworks on artists.artistid = artworks.artistid group by
+    -> artists.artistid, artists.name having
+    -> count(artworks.artworkid) > 2;
+Empty set (0.00 sec)
+15)List the categories with the average year of artworks they contain, only for categories with more than 1 artwork
+Ans:> select
+    -> categories.name as category_name, avg(artworks.year) as average_year from
+    -> categories inner join
+    -> artworks on categories.categoryid = artworks.categoryid group by
+    -> categories.categoryid, categories.name having
+    -> count(artworks.artworkid) > 1;
++---------------+--------------+
+| category_name | average_year |
++---------------+--------------+
+| Painting      |    1776.3333 |
++---------------+--------------+
+1 row in set (0.00 sec)
+16)Find the artworks that were exhibited in the 'Modern Art Masterpieces' exhibition.
+Ans: select
+    -> artworks.title, artists.name as artist_name, categories.name as category_name from
+    -> artworks inner join
+    -> exhibitionartworks on artworks.artworkid = exhibitionartworks.artworkid inner join
+    -> exhibitions on exhibitionartworks.exhibitionid = exhibitions.exhibitionid inner join
+    -> artists on artworks.artistid = artists.artistid inner join
+    -> categories on artworks.categoryid = categories.categoryid where
+    -> exhibitions.title = 'Modern Art Masterpieces';
++--------------+-------------------+---------------+
+| title        | artist_name       | category_name |
++--------------+-------------------+---------------+
+| Starry Night | Vincent van Gogh  | Painting      |
+| Mona Lisa    | Leonardo da Vinci | Painting      |
+| Guernica     | Pablo Picasso     | Painting      |
++--------------+-------------------+---------------+
+3 rows in set (0.00 sec)
+
+17)Find the categories where the average year of artworks is greater than the average year of all artworks. 
+Ans:select categories.name as category_name,avg(artworks.year) as average_year from categories inner join artworks on categories.categoryid = artworks.categoryid group by categories.name having avg(artworks.year) > (select avg(year) from artworks);
+Empty set (0.00 sec)
+18)List the artworks that were not exhibited in any exhibition. 
+Ans: select artworks.title as artwork_title,artists.name as artist_name from artworks left join exhibitionartworks on artworks.artworkid = exhibitionartworks.artworkid left join artists on artworks.artistid = artists.artistid where exhibitionartworks.exhibitionid is null;
+Empty set (0.00 sec)
+19)Show artists who have artworks in the same category as "Mona Lisa." 
+Ans: select artists.name as artist_name from artists inner join artworks on artists.artistid = artworks.artistid where artworks.categoryid=(select categoryid from artworks where title = 'Mona Lisa');
++-------------------+
+| artist_name       |
++-------------------+
+| Pablo Picasso     |
+| Vincent van Gogh  |
+| Leonardo da Vinci |
++-------------------+
+3 rows in set (0.01 sec)
+
+20)List the names of artists and the number of artworks they have in the gallery. 
+Ans: select artists.name as artist_name,count(artworks.artworkid) as no_of_artworks from artists left join artworks on artists.artistid = artworks.artistid group by artists.name;
++-------------------+----------------+
+| artist_name       | no_of_artworks |
++-------------------+----------------+
+| Pablo Picasso     |              1 |
+| Vincent van Gogh  |              1 |
+| Leonardo da Vinci |              1 |
++-------------------+----------------+
+3 rows in set (0.00 sec)
+
